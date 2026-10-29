@@ -1,84 +1,73 @@
 # ProxiSpeak
 
-**ProxiSpeak: Geospatial Proximity Audio Ecosystem** is a web development internship project for Infotact Solutions (Ref: ITS/WEB/1213), for the 10 October–10 November 2026 internship period.
+**ProxiSpeak: Geospatial Proximity Audio Ecosystem** is a web development internship project for Infotact Solutions (Ref: ITS/WEB/1213), scheduled for 10 October–10 November 2026.
 
-## What the project does
+## Project goal
 
-ProxiSpeak lets people talk through a shared virtual room. Each participant moves on a 2D canvas. WebRTC carries live microphone audio between peers, while Socket.io synchronizes room presence, coordinates, and WebRTC signaling. The listener's browser adjusts each remote participant's volume according to distance.
+ProxiSpeak is designed as a shared virtual room where participants can speak through live microphone audio. Participants move around a 2D canvas, and the listener's audio volume changes with Euclidean distance. The planned stack is React, Tailwind CSS, Canvas, Socket.io, WebRTC, and MongoDB.
 
-The current implementation focuses on virtual coordinates. GPS/Leaflet is a possible extension and is not part of the current room flow.
+## Team contributions and current status
 
-## Current repository contents
+- **Tejas:** Created the GitHub repository, prepared the project overview, and reviewed the project components.
+- **Jasmine Singh:** Developed the initial React frontend, including the room interface, virtual canvas, movement controls, and client-side WebRTC/Socket.io groundwork.
+- **Palak Sinha:** Developing the backend and will commit her backend implementation to the repository.
 
-- **client/** — React, Tailwind, and Canvas room interface; WebRTC peer connections; Express and Socket.io room server.
-- **backend/** — separate Express/MongoDB starter for uploaded, location-tagged audio spots and nearby search. These stored clips are distinct from the live peer-to-peer room audio.
-- **README.md** — project setup, architecture, API and signaling contracts, and known limitations.
+The frontend is in the client folder. The backend is intentionally pending Palak's commit; no backend implementation is included in this commit. Frontend room creation, presence, signaling, and live voice depend on matching backend API and Socket.io behavior, so those interfaces must be aligned during integration.
 
-The React frontend was initially developed by Jasmine Singh. Palak Sinha prepared the location-audio backend starter. Tejas created the project repository and reviewed the project components.
+## Proximity audio model
 
-## Architecture
+The frontend uses virtual Euclidean distance. Let R be the room's audible radius and d_min be max(30, 20% of R), capped at R.
 
-The browser connects to the room server for room lists, presence, movement, and SDP/ICE signaling. Audio itself travels peer-to-peer through WebRTC. The Web Audio API applies a GainNode to each remote stream and can use a PannerNode for direction. MongoDB persists room definitions. The separate backend service stores uploaded audio-spot metadata and files.
+- Gain is 1 when d <= d_min.
+- Gain falls linearly as 1 - (d - d_min) / (R - d_min) when d_min < d < R.
+- Gain is 0 when d >= R.
 
-## Proximity audio
+The client smooths changes to avoid abrupt volume transitions. WebRTC transports audio; the listener applies each remote participant's gain locally.
 
-The virtual room uses Euclidean distance. For distance d and room audible radius R, the current linear falloff is:
+## Frontend setup
 
-Let d_min be max(30, 20% of R), capped at R. Gain is 1 when d <= d_min, falls linearly as 1 - (d - d_min) / (R - d_min) when d_min < d < R, and is 0 when d >= R. The client smooths gain changes. Each listener applies the gain locally; movement updates do not renegotiate WebRTC.
+Requirements: Node.js 18 or newer.
 
-## Run the room application
+1. Change to the client folder.
+2. Install dependencies with npm install.
+3. Start the Vite development server with npm run dev.
+4. Open http://localhost:5173.
 
-Requirements: Node.js 18 or newer and a running MongoDB instance.
+The page can render without the backend, but room listing and creation require the backend API. Joining a room also requires the Socket.io signaling service, microphone permission, and a compatible backend. The Vite configuration currently proxies /api and /socket.io to localhost:3000; update it if the backend uses another local port.
 
-1. Open the client folder: **cd client**
-2. Copy **.env.example** to **.env** and set MONGO_URI if MongoDB is not using its local default.
-3. Install dependencies with **npm install**.
-4. Start the server and Vite client with **npm run dev**.
-5. Open **http://localhost:5173** in two browser windows, enter a name, and join the same room. Allow microphone access and use headphones when both windows use the same device.
+Create a production bundle with npm run build. Run npm run preview to preview that bundle.
 
-The room server listens on port 3000. Vite runs on port 5173 and proxies API and Socket.io requests to the room server. For a production build, run **npm run build** and then **npm start** from client; Express serves the generated client build.
+## Frontend's expected backend contract
 
-The client environment file also supports optional TURN settings. The default public STUN server can fail on restrictive networks; real deployments should configure a TURN service and protect its credentials.
+The frontend currently calls GET /api/rooms and POST /api/rooms. It expects room records with an ID, name, audible radius, and online participant count.
 
-## Room HTTP API
+The client also expects Socket.io events:
 
-| Method | Route | Purpose |
+| Direction | Event | Expected data |
 |---|---|---|
-| GET | /api/health | Report room server and MongoDB status |
-| GET | /api/rooms | List saved rooms with current online counts |
-| POST | /api/rooms | Create a room with a name and audible radius |
-
-Create-room JSON fields: name (required, up to 40 characters) and radius (80–600 virtual units; defaults to 250). Room IDs are MongoDB document IDs.
-
-## Socket.io events
-
-| Direction | Event | Payload or result |
-|---|---|---|
-| Client to server | join | roomId and name; acknowledgement returns participant id, room name, radius, canvas dimensions, and marker color |
-| Server to room | state | Current participant list with id, name, x, y, and color |
-| Client to server | move | Updated virtual x and y coordinates |
+| Client to server | join | roomId and name; acknowledgement with participant id, room name, radius, canvas dimensions, and marker color |
+| Server to room | state | Participant list with id, name, x, y, and color |
+| Client to server | move | Updated x and y coordinates |
 | Client to server | sig | Target participant id and WebRTC SDP or ICE data |
 | Server to recipient | sig | Sender id and relayed SDP or ICE data |
 
-The server only relays signaling between participants in the same room. Presence is in memory and is removed when a socket disconnects; room definitions persist in MongoDB.
+This table describes what the current frontend expects; it does not claim that the backend is already implemented.
 
-## Separate location-audio backend
+## Repository layout
 
-The backend folder is an optional standalone service for uploaded audio spots, not a dependency of live room voice. From that folder, copy **.env.example** to **.env**, install with **npm install**, and start with **npm run dev**. It defaults to port 5000 and the same local MongoDB database.
+- client: React and Vite frontend, Canvas stage, Socket.io client, and WebRTC audio hook.
+- README.md: project goals, progress, proximity model, and frontend/backend integration contract.
 
-Its routes are GET /api/health, POST /api/audio-spots, GET /api/audio-spots, GET /api/audio-spots/nearby, and GET /api/audio-spots/:id. The POST endpoint accepts multipart form data with title, optional description, latitude, longitude, and an audio file. Nearby results use Haversine distance and scan up to 5,000 records; a MongoDB 2dsphere index is needed for scalable searches.
+## Next steps
 
-## Known limitations and next steps
-
-- Rooms have no user accounts, authentication, or access control.
-- WebRTC currently uses a peer mesh, which is suitable for a small demonstration room but does not scale to large groups.
-- The location-audio upload starter checks declared MIME type and file size, but does not inspect audio file signatures. It is a learning scaffold, not a production upload service.
-- Add automated coverage, configure TURN, harden validation and upload handling, and verify the complete experience across separate devices and networks.
-- GPS support, formal report, presentation, and a repeatable deployed demonstration remain future work.
+1. Review Palak's backend commit and align its endpoints and event payloads with the frontend contract.
+2. Run the application with MongoDB and test room join/leave, coordinate updates, WebRTC connection, mute behavior, and gain cutoff across two devices or browser sessions.
+3. Document verified behavior, remaining limitations, and the repeatable demonstration steps.
+4. Complete the formal project report and presentation.
 
 ## Reference DSA exercise
 
-The internship also covers LeetCode 1385, Find the Distance Value Between Two Arrays. The reference approaches sort one array and use lower-bound/custom binary search to check whether values fall within the absolute-distance threshold.
+The internship also covers LeetCode 1385, Find the Distance Value Between Two Arrays. The reference approach sorts one array and uses lower-bound/custom binary search to check values within an absolute-distance threshold.
 
 ## License
 
