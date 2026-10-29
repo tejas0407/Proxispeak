@@ -70,12 +70,14 @@ export default function App() {
         <div className="grid gap-2.5">
           {others.map(o => {
             const inR = o.d <= info.radius, st = v.conn[o.id];
+            const dMin = Math.max(30, Math.round(info.radius * 0.2));
+            const pct = !inR ? 0 : o.d <= dMin ? 100 : Math.round(Math.max(0, 1 - (o.d - dMin) / (info.radius - dMin)) * 100);
             const lbl = !inR ? 'out of range' : st === 'connected' ? 'talking' : st === 'failed' ? 'blocked by network' : 'connecting';
             return (
               <div key={o.id} className={'grid grid-cols-[14px_1fr_54px] items-center gap-3 rounded-2xl bg-plum px-3.5 py-3 ' + (inR ? '' : 'opacity-50')}>
                 <i className="h-3.5 w-3.5 rounded-full" style={{ background: o.color }} />
                 <div><b className="block font-semibold">{o.name}</b><small className="text-dim">{o.d} m away, {lbl}</small></div>
-                <div className="h-2 overflow-hidden rounded bg-line"><span className="block h-full" style={{ width: Math.max(0, 100 - (o.d / info.radius) * 100) + '%', background: o.color }} /></div>
+                <div className="h-2 overflow-hidden rounded bg-line" title={`Volume: ${pct}%`}><span className="block h-full transition-all duration-150" style={{ width: pct + '%', background: o.color }} /></div>
               </div>
             );
           })}

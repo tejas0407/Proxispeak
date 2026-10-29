@@ -56,12 +56,30 @@ export default function Stage({ info, members, onMove }) {
       for (let y = 0; y <= H; y += 50) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
       g.strokeStyle = '#5f3470'; g.lineWidth = 4; g.strokeRect(0, 0, W, H);
       if (st.x !== null) {
-        g.beginPath(); g.arc(st.x, st.y, R, 0, 7); g.fillStyle = 'rgba(142,240,200,.08)'; g.fill();
+        const dMin = Math.max(30, Math.round(R * 0.2));
+
+        // Outer audible radius (d_max)
+        g.beginPath(); g.arc(st.x, st.y, R, 0, 7); g.fillStyle = 'rgba(142,240,200,.06)'; g.fill();
         g.setLineDash([12, 10]); g.lineWidth = 2; g.strokeStyle = '#8ef0c8'; g.stroke(); g.setLineDash([]);
+
+        // Inner full-volume radius (d_min)
+        g.beginPath(); g.arc(st.x, st.y, dMin, 0, 7); g.fillStyle = 'rgba(142,240,200,.12)'; g.fill();
+        g.lineWidth = 1.5; g.strokeStyle = 'rgba(142,240,200,.45)'; g.stroke();
+
         mem.current.forEach(o => {
           if (o.id === info.id) return;
           const dd = Math.hypot(o.x - st.x, o.y - st.y), inR = dd <= R;
-          if (inR) { g.globalAlpha = 0.25 + 0.6 * (1 - dd / R); g.strokeStyle = o.color; g.lineWidth = 3; g.beginPath(); g.moveTo(st.x, st.y); g.lineTo(o.x, o.y); g.stroke(); g.globalAlpha = 1; }
+          if (inR) {
+            const gain = dd <= dMin ? 1 : Math.max(0, 1 - (dd - dMin) / (R - dMin));
+            g.globalAlpha = 0.2 + 0.7 * gain;
+            g.strokeStyle = o.color;
+            g.lineWidth = 3;
+            g.beginPath();
+            g.moveTo(st.x, st.y);
+            g.lineTo(o.x, o.y);
+            g.stroke();
+            g.globalAlpha = 1;
+          }
           dot(o.x, o.y, 15, o.color, inR ? 1 : 0.35); label(o.name, o.x, o.y - 24, inR ? 1 : 0.5);
         });
         dot(st.x, st.y, 18, info.color); label((me?.name || 'You') + ' (you)', st.x, st.y - 28);

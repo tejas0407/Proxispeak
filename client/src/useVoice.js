@@ -11,11 +11,37 @@ export function useVoice() {
   const [conn, setConn] = useState({});
   const [muted, setMuted] = useState(false);
 
+  // Proximity audio attenuation model:
+  // gain = 1 when d <= d_min, linear falloff between d_min and d_max, 0 when d >= d_max
+  const calcGain = (d, dMax) => {
+    const dMin = Math.max(30, Math.round(dMax * 0.2));
+    if (d <= dMin) return 1;
+    if (d >= dMax) return 0;
+    return Math.max(0, Math.min(1, 1 - (d - dMin) / (dMax - dMin)));
+  };
+
   const audio = p => {
-    if (!p.gain) return;
-    p.gain.gain.value = Math.max(0.08, 1 - p.d / R.radius);
-    p.pan.positionX.value = R.dir ? p.dx / 100 : 0;
-    p.pan.positionZ.value = R.dir ? p.dy / 100 : 0; // listener faces -z, so "up" on the canvas is in front
+    if (!p.gain || !R.ctx) return;
+    const targetGain = calcGain(p.d, R.radius);
+    const now = R.ctx.currentTime;
+
+    // Smooth gain change over 50ms (time constant 0.05) to eliminate audio clipping / pops
+    p.gain.gain.cancelScheduledValues(now);
+    p.gain.gain.setTargetAtTime(targetGain, now, 0.05);
+
+    if (p.pan) {
+      const posX = R.dir ? p.dx / 100 : 0;
+      const posZ = R.dir ? p.dy / 100 : 0; // listener faces -z, so "up" on the canvas is in front
+      if (p.pan.positionX.setTargetAtTime) {
+        p.pan.positionX.cancelScheduledValues(now);
+        p.pan.positionZ.cancelScheduledValues(now);
+        p.pan.positionX.setTargetAtTime(posX, now, 0.05);
+        p.pan.positionZ.setTargetAtTime(posZ, now, 0.05);
+      } else {
+        p.pan.positionX.value = posX;
+        p.pan.positionZ.value = posZ;
+      }
+    }
   };
   const drop = id => { R.peers[id]?.pc.close(); delete R.peers[id]; setConn(c => { const n = { ...c }; delete n[id]; return n; }); };
 
