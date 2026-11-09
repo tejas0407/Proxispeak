@@ -14,9 +14,7 @@ ProxiSpeak is a real-time web application where participants join a shared virtu
 
 ## Architecture
 
-The React/Vite client runs in development on port 5173. Express and Socket.io run together on port 3000. Vite proxies API and Socket.io requests to Express. MongoDB stores room and audio-spot metadata. WebRTC transports live voice directly between participants; the server relays SDP and ICE messages but does not carry the audio itself.
-
-The live voice room uses virtual canvas coordinates. The audio-spots API is a separate location-tagged clip feature; uploaded clips are not part of live peer-to-peer voice.
+The application separates the browser interface, real-time room coordination, peer-to-peer media, and persistent metadata. The live voice room uses virtual canvas coordinates. The audio-spots API is a separate location-tagged clip feature; it does not place live participants on a GPS map. The complete component diagram, room lifecycle, API and Socket.IO contracts, data boundaries, and local run steps are documented in [Application Architecture](docs/ARCHITECTURE.md).
 
 ## Proximity audio model
 
