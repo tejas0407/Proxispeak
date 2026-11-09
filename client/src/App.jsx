@@ -18,6 +18,7 @@ export default function App() {
   const [rooms, setRooms] = useState([]), [name, setName] = useState(''), [rn, setRn] = useState(''), [rr, setRr] = useState(250);
   const [err, setErr] = useState(''), [info, setInfo] = useState(null), [dir, setDir] = useState(false), [loading, setLoading] = useState(true);
 
+  const visibleRooms = rooms.filter(room => !/integration smoke room/i.test(room.name));
   const load = () => api('/api/rooms').then(setRooms).catch(() => setErr('Could not connect to ProxiSpeak. Please check that the server is running.')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
@@ -42,11 +43,11 @@ export default function App() {
             <div className="mb-4"><h2 className="text-lg font-bold">Join the conversation</h2><p className="mt-1 text-sm text-muted">Choose a name, then join a space or start one.</p></div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-[.12em] text-muted" htmlFor="display-name">Your display name</label>
             <input id="display-name" className="field" value={name} onChange={e => setName(e.target.value)} maxLength={20} placeholder="e.g. Alex" />
-            <div className="mt-5 flex items-center justify-between"><h3 className="font-bold">Available rooms</h3><span className="text-xs text-muted">{rooms.length} {rooms.length === 1 ? 'space' : 'spaces'}</span></div>
+            <div className="mt-5 flex items-center justify-between"><h3 className="font-bold">Available rooms</h3><span className="text-xs text-muted">{visibleRooms.length} {visibleRooms.length === 1 ? 'space' : 'spaces'}</span></div>
             <div className="mt-3 grid gap-2">
               {loading && <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-muted">Finding rooms…</p>}
-              {!loading && rooms.map(r => <button key={r._id} onClick={() => enter(r._id)} className="room-choice"><span className="flex min-w-0 items-center gap-3"><span className="room-dot" /><span className="truncate font-semibold">{r.name}</span></span><span className="shrink-0 text-xs text-muted">{r.online} online <span className="mx-1 text-border">·</span> {r.radius}m range</span></button>)}
-              {!loading && !rooms.length && <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-muted">No rooms yet. Create the first one below.</p>}
+              {!loading && visibleRooms.map(r => <button key={r._id} onClick={() => enter(r._id)} className="room-choice"><span className="flex min-w-0 items-center gap-3"><span className="room-dot" /><span className="truncate font-semibold">{r.name}</span></span><span className="shrink-0 text-xs text-muted">{r.online} online <span className="mx-1 text-border">·</span> {r.radius}m range</span></button>)}
+              {!loading && !visibleRooms.length && <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-muted">No rooms yet. Create the first one below.</p>}
             </div>
             <div className="mt-4 grid gap-2 border-t border-border pt-4 sm:grid-cols-[1fr_116px_auto]">
               <input className="field" value={rn} onChange={e => setRn(e.target.value)} placeholder="New room name" aria-label="New room name" maxLength={40} />
