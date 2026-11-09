@@ -27,8 +27,8 @@ export default function Stage({ info, members, onMove }) {
       st.tx = clamp((e.clientX - r.left - ox) / s, 0, W); st.ty = clamp((e.clientY - r.top - oy) / s, 0, H);
     };
 
-    const label = (t, x, y, a = 1) => { g.globalAlpha = a; g.fillStyle = '#ffd8bd'; g.font = '600 14px "Bricolage Grotesque", sans-serif'; g.textAlign = 'center'; g.fillText(t, x, y); g.globalAlpha = 1; };
-    const dot = (x, y, r, col, a = 1) => { g.globalAlpha = a; g.beginPath(); g.arc(x, y, r, 0, 7); g.fillStyle = col; g.fill(); g.lineWidth = 4; g.strokeStyle = '#2b0f33'; g.stroke(); g.globalAlpha = 1; };
+    const label = (t, x, y, a = 1) => { g.globalAlpha = a; g.fillStyle = '#172033'; g.font = '600 14px "Bricolage Grotesque", sans-serif'; g.textAlign = 'center'; g.fillText(t, x, y); g.globalAlpha = 1; };
+    const dot = (x, y, r, col, a = 1) => { g.globalAlpha = a; g.beginPath(); g.arc(x, y, r, 0, 7); g.fillStyle = col; g.fill(); g.lineWidth = 4; g.strokeStyle = '#ffffff'; g.stroke(); g.globalAlpha = 1; };
 
     const loop = t => {
       const dt = Math.min(0.05, (t - last) / 1000); last = t;
@@ -50,21 +50,21 @@ export default function Stage({ info, members, onMove }) {
       const { s, ox, oy, d } = L.current;
       g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, c.width, c.height);
       g.save(); g.translate(ox, oy); g.scale(s, s);
-      g.fillStyle = '#34163d'; g.fillRect(0, 0, W, H);
-      g.strokeStyle = 'rgba(95,52,112,.55)'; g.lineWidth = 1;
+      g.fillStyle = '#f8faff'; g.fillRect(0, 0, W, H);
+      g.strokeStyle = 'rgba(174,187,207,.32)'; g.lineWidth = 1;
       for (let x = 0; x <= W; x += 50) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
       for (let y = 0; y <= H; y += 50) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
-      g.strokeStyle = '#5f3470'; g.lineWidth = 4; g.strokeRect(0, 0, W, H);
+      g.strokeStyle = '#dce3ed'; g.lineWidth = 4; g.strokeRect(0, 0, W, H);
       if (st.x !== null) {
         const dMin = Math.max(30, Math.round(R * 0.2));
 
         // Outer audible radius (d_max)
-        g.beginPath(); g.arc(st.x, st.y, R, 0, 7); g.fillStyle = 'rgba(142,240,200,.06)'; g.fill();
-        g.setLineDash([12, 10]); g.lineWidth = 2; g.strokeStyle = '#8ef0c8'; g.stroke(); g.setLineDash([]);
+        g.beginPath(); g.arc(st.x, st.y, R, 0, 7); g.fillStyle = 'rgba(53,99,217,.045)'; g.fill();
+        g.setLineDash([12, 10]); g.lineWidth = 2; g.strokeStyle = '#7e9bec'; g.stroke(); g.setLineDash([]);
 
         // Inner full-volume radius (d_min)
-        g.beginPath(); g.arc(st.x, st.y, dMin, 0, 7); g.fillStyle = 'rgba(142,240,200,.12)'; g.fill();
-        g.lineWidth = 1.5; g.strokeStyle = 'rgba(142,240,200,.45)'; g.stroke();
+        g.beginPath(); g.arc(st.x, st.y, dMin, 0, 7); g.fillStyle = 'rgba(53,99,217,.10)'; g.fill();
+        g.lineWidth = 1.5; g.strokeStyle = 'rgba(53,99,217,.32)'; g.stroke();
 
         mem.current.forEach(o => {
           if (o.id === info.id) return;
@@ -91,5 +91,6 @@ export default function Stage({ info, members, onMove }) {
     return () => { cancelAnimationFrame(raf); removeEventListener('resize', fit); removeEventListener('keydown', kd); removeEventListener('keyup', ku); };
   }, [info]);
 
-  return <canvas ref={cv} className="block touch-none cursor-crosshair" aria-label="Room map. Move with WASD, arrow keys or by clicking." />;
+  return <canvas ref={cv} className="block h-full w-full touch-none cursor-crosshair" aria-label="Room map. Move with WASD, arrow keys or by clicking." />;
 }
+
