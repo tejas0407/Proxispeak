@@ -1,23 +1,18 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
 # Dependencies
 node_modules/
-dist/
-dist-ssr/
 
-# Local env files
+# Local secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
-# Editor / OS
+# Generated output and runtime uploads
+client/dist/
+client/uploads/*
+!client/uploads/.gitkeep
+
+# Logs and editor files
+*.log
 .vscode/
 .idea/
 .DS_Store

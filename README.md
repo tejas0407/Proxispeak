@@ -2,68 +2,81 @@
 
 **ProxiSpeak: Geospatial Proximity Audio Ecosystem** is a web development internship project for Infotact Solutions (Ref: ITS/WEB/1213), scheduled for 10 October–10 November 2026.
 
-## Project goal
+## Project overview
 
-ProxiSpeak is designed as a shared virtual room where participants can speak through live microphone audio. Participants move around a 2D canvas, and the listener's audio volume changes with Euclidean distance. The planned stack is React, Tailwind CSS, Canvas, Socket.io, WebRTC, and MongoDB.
+ProxiSpeak is a real-time web application where participants join a shared virtual room, move on a 2D canvas, and talk through peer-to-peer WebRTC audio. The Node.js/Express server stores room and audio-spot metadata in MongoDB, synchronizes room presence and coordinates with Socket.io, and relays WebRTC signaling. The browser uses the Web Audio API to adjust each remote participant's volume according to distance.
 
-## Team contributions and current status
+## Team contributions
 
-- **Tejas:** Created the GitHub repository, prepared the project overview, and reviewed the project components.
-- **Jasmine Singh:** Developed the initial React frontend, including the room interface, virtual canvas, movement controls, and client-side WebRTC/Socket.io groundwork.
-- **Palak Sinha:** Developing the backend and will commit her backend implementation to the repository.
+- **Tejas:** Created the repository and project overview, reviewed the project components, and coordinated integration.
+- **Jasmine Singh:** Developed the React frontend, virtual canvas, movement controls, and client-side WebRTC/Socket.io logic.
+- **Palak Sinha:** Developed the MongoDB-backed location-audio backend foundation, including audio uploads and nearby search. The backend is integrated with the room and signaling server.
 
-The frontend is in the client folder. The backend is intentionally pending Palak's commit; no backend implementation is included in this commit. Frontend room creation, presence, signaling, and live voice depend on matching backend API and Socket.io behavior, so those interfaces must be aligned during integration.
+## Architecture
+
+The React/Vite client runs in development on port 5173. Express and Socket.io run together on port 3000. Vite proxies API and Socket.io requests to Express. MongoDB stores room and audio-spot metadata. WebRTC transports live voice directly between participants; the server relays SDP and ICE messages but does not carry the audio itself.
+
+The live voice room uses virtual canvas coordinates. The audio-spots API is a separate location-tagged clip feature; uploaded clips are not part of live peer-to-peer voice.
 
 ## Proximity audio model
 
-The frontend uses virtual Euclidean distance. Let R be the room's audible radius and d_min be max(30, 20% of R), capped at R.
+For virtual distance d and room radius R, d_min is max(30, 20% of R), capped at R.
 
 - Gain is 1 when d <= d_min.
 - Gain falls linearly as 1 - (d - d_min) / (R - d_min) when d_min < d < R.
 - Gain is 0 when d >= R.
 
-The client smooths changes to avoid abrupt volume transitions. WebRTC transports audio; the listener applies each remote participant's gain locally.
+The listener applies the gain to each remote stream locally and smooths changes to avoid abrupt volume steps.
 
-## Frontend setup
+## Requirements and setup
 
-Requirements: Node.js 18 or newer.
+Use Node.js 18 or newer and MongoDB Community Server or MongoDB Atlas.
 
 1. Change to the client folder.
-2. Install dependencies with npm install.
-3. Start the Vite development server with npm run dev.
-4. Open http://localhost:5173.
+2. Copy .env.example to .env. Set MONGO_URI if using a remote or non-default MongoDB instance.
+3. Install packages with npm install.
+4. Start the room server and Vite with npm run dev.
+5. Open http://localhost:5173, allow microphone access, and join the same room from two browser windows. Use headphones when testing on one computer.
 
-The page can render without the backend, but room listing and creation require the backend API. Joining a room also requires the Socket.io signaling service, microphone permission, and a compatible backend. The Vite configuration currently proxies /api and /socket.io to localhost:3000; update it if the backend uses another local port.
+The API and Socket.io server listen on port 3000. Production mode serves the built client from Express: run npm run build, then npm start from the client folder.
 
-Create a production bundle with npm run build. Run npm run preview to preview that bundle.
+The default public STUN server may not connect participants behind restrictive NATs; configure the optional TURN settings in client/.env.example for broader network support.
 
-## Frontend's expected backend contract
+## HTTP API
 
-The frontend currently calls GET /api/rooms and POST /api/rooms. It expects room records with an ID, name, audible radius, and online participant count.
-
-The client also expects Socket.io events:
-
-| Direction | Event | Expected data |
+| Method | Route | Purpose |
 |---|---|---|
-| Client to server | join | roomId and name; acknowledgement with participant id, room name, radius, canvas dimensions, and marker color |
-| Server to room | state | Participant list with id, name, x, y, and color |
-| Client to server | move | Updated x and y coordinates |
+| GET | /api/health | Room service and MongoDB status |
+| GET | /api/rooms | List saved rooms with current online participant counts |
+| POST | /api/rooms | Create a room with a name and audible radius |
+| POST | /api/audio-spots | Upload a location-tagged audio clip |
+| GET | /api/audio-spots | List recent audio spots |
+| GET | /api/audio-spots/nearby?latitude=...&longitude=...&radiusKm=5 | Find nearby audio spots |
+| GET | /api/audio-spots/:id | Retrieve one audio spot |
+
+Room creation accepts a JSON name (up to 40 characters) and radius (80–600 virtual units; defaults to 250). Audio upload uses multipart form data with title, optional description, latitude, longitude, and an audio file up to 15 MB. Uploaded files are served under /uploads.
+
+Nearby audio-spot search uses Haversine distance and scans a bounded number of records. A GeoJSON Point field and MongoDB 2dsphere index are recommended before scaling.
+
+## Socket.io events
+
+| Direction | Event | Data |
+|---|---|---|
+| Client to server | join | roomId and name; acknowledgement returns participant id, room name, radius, canvas dimensions, and color |
+| Server to room | state | Participants with id, name, x, y, and color |
+| Client to server | move | Updated virtual x and y coordinates |
 | Client to server | sig | Target participant id and WebRTC SDP or ICE data |
 | Server to recipient | sig | Sender id and relayed SDP or ICE data |
 
-This table describes what the current frontend expects; it does not claim that the backend is already implemented.
+Presence and coordinates are held in memory and cleared when a socket disconnects. Room and audio-spot records persist in MongoDB.
 
-## Repository layout
+## Known limitations and next steps
 
-- client: React and Vite frontend, Canvas stage, Socket.io client, and WebRTC audio hook.
-- README.md: project goals, progress, proximity model, and frontend/backend integration contract.
-
-## Next steps
-
-1. Review Palak's backend commit and align its endpoints and event payloads with the frontend contract.
-2. Run the application with MongoDB and test room join/leave, coordinate updates, WebRTC connection, mute behavior, and gain cutoff across two devices or browser sessions.
-3. Document verified behavior, remaining limitations, and the repeatable demonstration steps.
-4. Complete the formal project report and presentation.
+- Rooms do not have accounts or access control.
+- Voice uses a peer-to-peer mesh, suitable for small demonstration rooms but not large groups.
+- Upload checks the declared MIME type and file size, but not the audio file signature.
+- Configure TURN, add authentication, improve geographic indexing, and verify calls across separate networks.
+- GPS/Leaflet, formal report, presentation, and a repeatable hosted demonstration remain future deliverables.
 
 ## Reference DSA exercise
 
