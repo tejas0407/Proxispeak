@@ -112,7 +112,7 @@ There is no trained machine-learning model in ProxiSpeak, so ML model evaluation
 
 - Source code: [GitHub repository](https://github.com/tejas0407/Proxispeak) and included source archive.
 - Technical documentation: this guide and the architecture guide.
-- Formal report: `report/ProxiSpeak_Project_Report.docx`.
-- Presentation: `presentation/ProxiSpeak_Final_Review.pptx`.
+- Formal report: `ProxiSpeak_Project_Report.docx` (included in the submission pack).
+- Presentation: `ProxiSpeak_Final_Review.pptx` (included in the submission pack).
 - Model evaluation: not applicable; deterministic functional verification is documented above.
 - Demonstration: run the live app using the steps in [Demo Guide](DEMO_GUIDE.md).
