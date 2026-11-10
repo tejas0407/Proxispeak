@@ -74,7 +74,20 @@ Presence and coordinates are held in memory and cleared when a socket disconnect
 - Voice uses a peer-to-peer mesh, suitable for small demonstration rooms but not large groups.
 - Upload checks the declared MIME type and file size, but not the audio file signature.
 - Configure TURN, add authentication, improve geographic indexing, and verify calls across separate networks.
-- GPS/Leaflet, formal report, presentation, and a repeatable hosted demonstration remain future deliverables.
+- GPS/Leaflet tracking for live participants and a hosted production deployment are future extensions.
+
+## Submission deliverables
+
+- [Technical project documentation](docs/PROJECT_DOCUMENTATION.md)
+- [Architecture guide](docs/ARCHITECTURE.md)
+- [Two-browser demo guide](docs/DEMO_GUIDE.md)
+- [Validation notes and known limits](docs/VALIDATION_NOTES.md)
+- [Formal project report](docs/ProxiSpeak_Project_Report.docx)
+- [Final review presentation](docs/ProxiSpeak_Final_Review.pptx)
+- [Source code archive](deliverables/ProxiSpeak_Source_Code.zip)
+- [Complete submission pack](deliverables/ProxiSpeak_Submission_Pack.zip)
+
+There is no trained ML model in this project, so model evaluation metrics are not applicable. Functional checks are described in the validation notes. A live microphone call across separate networks still needs verification with a configured TURN service.
 
 ## Reference DSA exercise
 
